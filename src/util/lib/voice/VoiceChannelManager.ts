@@ -39,11 +39,15 @@ export default class VoiceChannelManager {
 
 	public static async curateChannels(guild: Guild): Promise<void> {
 		let voiceChannels: Collection<string, GuildChannel> = this.getCurrentChannels(guild);
+		let emptyChannelCount: number = this.getEmptyChannelCount(guild);
 
 		voiceChannels.forEach((channel: VoiceChannel) => {
 			if ((channel.id !== Constants.baseVoiceChannelIdOne && channel.id !== Constants.baseVoiceChannelIdTwo) && channel.members.size === 0)
 				channel.delete();
 		});
+
+		if (emptyChannelCount === 0)
+			this.createChannel(guild);
 	}
 
 	public static getChannelCount(guild: Guild): int {
