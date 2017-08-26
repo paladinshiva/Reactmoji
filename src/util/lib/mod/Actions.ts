@@ -1,7 +1,7 @@
 import { GuildMember, Guild, RichEmbed, User, TextChannel } from 'discord.js';
 import { GuildStorage, Logger, logger } from 'yamdbf';
-import { SweeperClient } from '../../util/lib/SweeperClient';
-import Constants from '../../util/Constants';
+import { SweeperClient } from '../SweeperClient';
+import Constants from '../../Constants';
 import * as moment from 'moment';
 
 /**
@@ -206,7 +206,7 @@ export class Actions
 	public async userJoin(gmUser: GuildMember, guild: Guild): Promise<any>
 	{
 		let dateJoined = new Date(gmUser.joinedAt);
-		return this._client.database.commands.users.userJoin(gmUser.user.id, gmUser.user.tag, guild.id, dateJoined)
+		return await this._client.database.commands.users.userJoin(gmUser.user.id, gmUser.user.tag, guild.id, dateJoined)
 			.then(function(result) {
 				return;
 			})
