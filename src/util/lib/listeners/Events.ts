@@ -23,7 +23,7 @@ export class Events {
 		let channelCount: number = VoiceChannelManager.getChannelCount(newMember.guild);
 		let emptyChannels: number = VoiceChannelManager.getEmptyChannelCount(newMember.guild);
 
-		if (emptyChannels <= 1)
+		if (emptyChannels < 1)
 			makeChannel = true;
 
 		if ((newMember.voiceChannel !== undefined && newMember.voiceChannel.name.startsWith('Fireteam ')) && newMember.voiceChannelID !== null && makeChannel)
