@@ -3,7 +3,6 @@ import { TextChannel, RichEmbed, Message, MessageReaction, Guild, GuildMember, R
 import { SweeperClient } from '../SweeperClient';
 import { MuteManager } from '../mod/managers/MuteManager';
 import Constants from '../../Constants';
-import VoiceChannelManager from '../voice/VoiceChannelManager';
 
 const config: any = require('../../../config.json');
 const { on, registerListeners } = ListenerUtil;
@@ -20,14 +19,14 @@ export class Events {
 	@on('voiceStateUpdate')
 	private async _onVoiceStateUpdate(oldMember: GuildMember, newMember: GuildMember): Promise<void> {
 		let makeChannel: boolean = false;
-		let channelCount: number = VoiceChannelManager.getChannelCount(newMember.guild);
-		let emptyChannels: number = VoiceChannelManager.getEmptyChannelCount(newMember.guild);
+		let channelCount: number = this._client.voiceChannelManager.getChannelCount(newMember.guild);
+		let emptyChannels: number = this._client.voiceChannelManager.getEmptyChannelCount(newMember.guild);
 
 		if (emptyChannels < 1)
 			makeChannel = true;
 
 		if ((newMember.voiceChannel !== undefined && newMember.voiceChannel.name.startsWith('Fireteam ')) && newMember.voiceChannelID !== null && makeChannel)
-			VoiceChannelManager.createChannel(newMember);
+			this._client.voiceChannelManager.createChannel(newMember);
 	}
 
 	@on('messageReactionAdd')
