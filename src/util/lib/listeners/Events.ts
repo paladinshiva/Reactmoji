@@ -27,7 +27,7 @@ export class Events {
 			makeChannel = true;
 
 		if ((newMember.voiceChannel !== undefined && newMember.voiceChannel.name.startsWith('Fireteam ')) && newMember.voiceChannelID !== null && makeChannel)
-			VoiceChannelManager.createChannel(newMember.guild);
+			VoiceChannelManager.createChannel(newMember);
 	}
 
 	@on('messageReactionAdd')

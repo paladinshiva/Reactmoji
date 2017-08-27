@@ -1,4 +1,4 @@
-import { Collection, Guild, GuildChannel, VoiceChannel } from 'discord.js';
+import { Collection, Guild, GuildChannel, GuildMember, VoiceChannel } from 'discord.js';
 import { GuildStorage, ListenerUtil } from 'yamdbf';
 import { SweeperClient } from '../SweeperClient';
 import Constants from '../../Constants';
@@ -22,41 +22,73 @@ export default class VoiceChannelManager {
 		});
 	}
 
-	public static async createChannel(guild: Guild): Promise<void> {
-		let channel: VoiceChannel = guild.channels.find('id', Constants.baseVoiceChannelIdOne) as VoiceChannel;
+	public static async curateChannels(guild: Guild): Promise<void> {
+		let emptyChannels: Array<VoiceChannel> = this.getEmptyChannels(guild).map((channel: VoiceChannel) => { return channel; });
+		let zavalaHasUsers: boolean = ((guild.channels.find('id', Constants.baseVoiceChannelIdOne) as VoiceChannel).members.size > 0) ? true : false;
+		let ikoraHasUsers: boolean = ((guild.channels.find('id', Constants.baseVoiceChannelIdTwo) as VoiceChannel).members.size > 0) ? true : false;
+
+		emptyChannels.forEach((channel: VoiceChannel) => {
+			if ((channel.id !== Constants.baseVoiceChannelIdOne && channel.id !== Constants.baseVoiceChannelIdTwo))
+				channel.delete();
+		});
+
+		if (zavalaHasUsers && ikoraHasUsers)
+			this.createTempChannel(guild);
+	}
+
+	public static async createChannel(member: GuildMember): Promise<void> {
+		let channel: VoiceChannel = member.guild.channels.find('id', Constants.baseVoiceChannelIdOne) as VoiceChannel;
 		let channelName: string = this.getChannelName();
-		let currentChannelNames: Array<string> = this.getCurrentChannelNames(guild);
-		var channelPosition: number = this.getCurrentChannels(guild).last().position + 1;
+		let currentChannelNames: Array<string> = this.getCurrentChannelNames(member.guild);
 
 		do { channelName = this.getChannelName(); }
 		while (currentChannelNames.indexOf(channelName) !== -1);
 
 		let newChannel: VoiceChannel = await channel.clone(channelName, true, true) as VoiceChannel;
 
-		await newChannel.setPosition(channelPosition);
+		await newChannel.setPosition(member.voiceChannel.position + 1);
 		await newChannel.setUserLimit(6);
 	}
 
-	public static async curateChannels(guild: Guild): Promise<void> {
-		let voiceChannels: Collection<string, GuildChannel> = this.getCurrentChannels(guild);
-		let emptyChannelCount: number = this.getEmptyChannelCount(guild);
+	public static async createTempChannel(guild: Guild): Promise<void> {
+		let channel: VoiceChannel = guild.channels.find('id', Constants.baseVoiceChannelIdTwo) as VoiceChannel;
+		let channelName: string = this.getChannelName();
+		let currentChannelNames: Array<string> = this.getCurrentChannelNames(guild);
 
-		voiceChannels.forEach((channel: VoiceChannel) => {
-			if ((channel.id !== Constants.baseVoiceChannelIdOne && channel.id !== Constants.baseVoiceChannelIdTwo) && channel.members.size === 0)
-				channel.delete();
-		});
+		do { channelName = this.getChannelName(); }
+		while (currentChannelNames.indexOf(channelName) !== -1);
 
-		if (emptyChannelCount === 0)
-			this.createChannel(guild);
+		let newChannel: VoiceChannel = await channel.clone(channelName, true, true) as VoiceChannel;
+
+		await newChannel.setPosition(channel.position + 1);
+		await newChannel.setUserLimit(6);
 	}
 
-	public static getChannelCount(guild: Guild): int {
+	public static getChannelCount(guild: Guild): number {
 		return guild.channels.filter((channel: VoiceChannel, key: string, collection: Collection<string, VoiceChannel>) => {
 			return (channel.type === 'voice' && channel.name.startsWith('Fireteam ')) ? true : false;
 		}).size;
 	}
 
-	public static getEmptyChannelCount(guild: Guild): int {
+	public static getEmptyChannels(guild: Guild): Collection<string, GuildChannel> {
+		return guild.channels.filter((channel: VoiceChannel, key: string, collection: Collection<string, VoiceChannel>) => {
+			return ((channel.type === 'voice' && channel.name.startsWith('Fireteam ')) && channel.members.size === 0) ? true : false;
+		});
+	}
+
+	public static getUsedChannels(guild: Guild): Collection<string, GuildChannel> {
+		return guild.channels.filter((channel: VoiceChannel, key: string, collection: Collection<string, VoiceChannel>) => {
+			return ((channel.type === 'voice' && channel.name.startsWith('Fireteam ')) && channel.members.size !== 0) ? true : false;
+		});
+	}
+
+	public static getUsedChannelsCount(guild: Guild): number {
+		return guild.channels.filter((channel: VoiceChannel, key: string, collection: Collection<string, VoiceChannel>) => {
+			return ((channel.type === 'voice' && channel.name.startsWith('Fireteam ')) && channel.members.size !== 0) ? true : false;
+		}).size;
+	}
+
+	public static getEmptyChannelCount(guild: Guild): number {
 		return guild.channels.filter((channel: VoiceChannel, key: string, collection: Collection<string, VoiceChannel>) => {
 			return ((channel.type === 'voice' && channel.name.startsWith('Fireteam ')) && channel.members.size === 0) ? true : false;
 		}).size;
