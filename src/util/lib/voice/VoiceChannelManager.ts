@@ -24,43 +24,30 @@ export default class VoiceChannelManager {
 
 	public static async curateChannels(guild: Guild): Promise<void> {
 		let emptyChannels: Array<VoiceChannel> = this.getEmptyChannels(guild).map((channel: VoiceChannel) => { return channel; });
+
+		let channelsToDelete: number = emptyChannels.length - 1;
 		let zavalaHasUsers: boolean = ((guild.channels.find('id', Constants.baseVoiceChannelIdOne) as VoiceChannel).members.size > 0) ? true : false;
 		let ikoraHasUsers: boolean = ((guild.channels.find('id', Constants.baseVoiceChannelIdTwo) as VoiceChannel).members.size > 0) ? true : false;
 
-		emptyChannels.forEach((channel: VoiceChannel) => {
-			if ((channel.id !== Constants.baseVoiceChannelIdOne && channel.id !== Constants.baseVoiceChannelIdTwo))
-				channel.delete();
-		});
-
-		if (zavalaHasUsers && ikoraHasUsers)
-			this.createTempChannel(guild);
+		for (let x: number = 0; x <= channelsToDelete; x++){
+			if ((!zavalaHasUsers && ikoraHasUsers) || (zavalaHasUsers && !ikoraHasUsers))
+				emptyChannels[x].delete();
+		}
 	}
 
 	public static async createChannel(member: GuildMember): Promise<void> {
-		let channel: VoiceChannel = member.guild.channels.find('id', Constants.baseVoiceChannelIdOne) as VoiceChannel;
+		let baseChannelOne: VoiceChannel = member.guild.channels.find('id', Constants.baseVoiceChannelIdOne) as VoiceChannel;
+		let baseChannelTwo: VoiceChannel = member.guild.channels.find('id', Constants.baseVoiceChannelIdTwo) as VoiceChannel;
 		let channelName: string = this.getChannelName();
 		let currentChannelNames: Array<string> = this.getCurrentChannelNames(member.guild);
+		let position: number = this.getUsedChannelsCount(member.guild) + 1;
 
 		do { channelName = this.getChannelName(); }
 		while (currentChannelNames.indexOf(channelName) !== -1);
 
-		let newChannel: VoiceChannel = await channel.clone(channelName, true, true) as VoiceChannel;
+		let newChannel: VoiceChannel = await baseChannelOne.clone(channelName, true, true) as VoiceChannel;
 
-		await newChannel.setPosition(member.voiceChannel.position + 1);
-		await newChannel.setUserLimit(6);
-	}
-
-	public static async createTempChannel(guild: Guild): Promise<void> {
-		let channel: VoiceChannel = guild.channels.find('id', Constants.baseVoiceChannelIdTwo) as VoiceChannel;
-		let channelName: string = this.getChannelName();
-		let currentChannelNames: Array<string> = this.getCurrentChannelNames(guild);
-
-		do { channelName = this.getChannelName(); }
-		while (currentChannelNames.indexOf(channelName) !== -1);
-
-		let newChannel: VoiceChannel = await channel.clone(channelName, true, true) as VoiceChannel;
-
-		await newChannel.setPosition(channel.position + 1);
+		await newChannel.setPosition(position);
 		await newChannel.setUserLimit(6);
 	}
 
@@ -72,7 +59,7 @@ export default class VoiceChannelManager {
 
 	public static getEmptyChannels(guild: Guild): Collection<string, GuildChannel> {
 		return guild.channels.filter((channel: VoiceChannel, key: string, collection: Collection<string, VoiceChannel>) => {
-			return ((channel.type === 'voice' && channel.name.startsWith('Fireteam ')) && channel.members.size === 0) ? true : false;
+			return ((channel.type === 'voice' && channel.name.startsWith('Fireteam ')) && channel.members.size === 0 && (channel.id !== Constants.baseVoiceChannelIdOne && channel.id !== Constants.baseVoiceChannelIdTwo)) ? true : false;
 		});
 	}
 
